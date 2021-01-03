@@ -1,0 +1,114 @@
+
+
+%%%%%%%%%%%%%Matlab log file, need to turn into a proper Mat script, and read from input too
+
+% Make the matrices:
+
+> n = 5000
+> A = richard(n);
+> size(A)
+ans =
+        5000        5000
+> nnz(A)
+ans =
+       99794
+> M = A'*A;
+> nnz(M)
+ans =
+     1918742
+> nnz(M)/n^2
+ans =
+    0.0767
+> eigs = eig(full(M));
+> min(eigs)
+ans =
+   1.7788e-07
+> max(eigs)
+ans =
+   95.0840
+> cond(full(M))
+ans =
+   5.3453e+08
+> cond(full(A))
+ans =
+   2.3120e+04
+
+% Random right-hand side:
+
+> b = randn(n,1);
+> Atb = A'*b;
+
+% Pivoting LU on the nonsymmetric matrix:
+
+> tic; x_piv = A \ b; toc
+Elapsed time is 2.099114 seconds.
+> resid_piv = norm(A*x_piv-b)/norm(b)
+resid_piv =
+   7.0242e-15
+
+% Cholesky on the SPD matrix:
+
+> tic; x_chol = M \ Atb; toc
+Elapsed time is 0.748401 seconds.
+> resid_chol = norm(A*x_chol-b)/norm(b)
+resid_chol =
+   1.7887e-12
+
+% Note that, even with min degree permutation, the Cholesky factor of M is an almost full triangular matrix:
+
+> p = symamd(M);
+> R = chol(M(p,p));
+> tic; R = chol(M(p,p)); toc
+Elapsed time is 1.100059 seconds.
+> nnz(R)
+ans =
+    11645252
+> nnz(R) / n^2
+ans =
+    0.4658
+
+% CG with no preconditioner:
+
+> tic; x_cg = pcg(M, Atb, 1e-9, 20000); toc
+pcg converged at iteration 11678 to a solution with relative residual 9.1e-10.
+Elapsed time is 25.904217 seconds.
+> resid_cg = norm(A*x_cg - b) / norm(b)
+resid_cg =
+   2.5098e-09
+
+% CG with no-fill ILU preconditioner:
+
+> L = ichol(M);
+> nnz(M)
+ans =
+     1918742
+> nnz(L)
+ans =
+      961871
+> nnz(tril(L))
+ans =
+      961871
+> tic; x_ilucg = pcg(M, Atb, 1e-9, 20000, L, L'); toc
+pcg converged at iteration 4219 to a solution with relative residual 8.4e-10.
+Elapsed time is 24.221002 seconds.
+
+% GMRES chokes on the nonsymmetric problem:
+
+> tic; x_gmres1 = gmres(A, Atb, 100, 1e-9, 1000); toc
+{Operation terminated by user during gmres (line 310)}
+
+tic; x_gmres1 = gmres(A, b, 50, 1e-9, 500); toc
+gmres(50) stopped at outer iteration 500 (inner iteration 50) without converging to the desired tolerance 1e-09 because the maximum number of iterations was reached.
+The iterate returned (number 14(50)) has relative residual 0.99.
+Elapsed time is 43.585798 seconds.
+> norm(A*x_gmres1-b)/ norm(b)
+ans =
+    0.9942
+
+% BICGSTAB chokes too:
+
+> tic; x_bicgstab = bicgstab(A, b, 1e-9, 500); toc
+bicgstab stopped at iteration 56 without converging to the desired tolerance 1e-09
+because a scalar quantity became too small or too large to continue computing.
+The iterate returned (number 0) has relative residual 1.
+Elapsed time is 0.047059 seconds.
