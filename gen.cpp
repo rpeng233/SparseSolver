@@ -28,9 +28,9 @@ int main(int argt, char **args) {
     }
   }
 
-  printf("%d\n", nnz.size());
+  printf("%d %d %d\n", n, n, nnz.size());
   for(auto x:nnz) {
-    printf("%d %d %0.3g\n", x.first.first, x.first.second, x.second);
+    printf("%d %d %0.3g\n", x.first.first + 1, x.first.second + 1, x.second);
   }
   return 0;
 }
