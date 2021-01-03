@@ -9,6 +9,8 @@ You should run the following data generators to get all the data:
 * GenRandMatrices.sh
 Note that matrices (.A.in) and vectors (.b.in) are stored separately
 
+(TODO: write a gener that creates a vector b and its solution x?)
+
 Methods we include are:
 * Conjugate Gradient
 * Dixon p-adic
